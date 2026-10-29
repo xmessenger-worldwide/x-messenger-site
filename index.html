@@ -2,193 +2,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>X Messenger</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#0b1120;color:#f8fafc;font-family:Arial,sans-serif}
-main{max-width:520px;margin:35px auto;padding:18px}
-header{text-align:center;margin-bottom:25px}
-.logo{font-size:42px;font-weight:bold;color:#60a5fa}
-p{color:#94a3b8}
-.card{background:#151f32;border:1px solid #28364c;border-radius:18px;padding:22px;margin-bottom:18px}
-input,button{width:100%;padding:13px;margin:7px 0;border-radius:9px;font-size:16px}
-input{background:#0b1120;color:white;border:1px solid #34445d}
-button{background:#3b82f6;color:white;border:0;font-weight:bold;cursor:pointer}
-button.secondary{background:#263449}
-.hidden{display:none!important}
-#messages{height:300px;overflow-y:auto;padding:8px}
-.msg{background:#223149;border-radius:10px;padding:10px;margin:8px 0;overflow-wrap:anywhere}
-.msg b{color:#93c5fd}
-small{color:#94a3b8}
-#status{white-space:pre-wrap;font-size:14px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X Messenger</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101820;
+      color: white;
+    }
+    header {
+      background: #1d9bf0;
+      padding: 18px;
+      text-align: center;
+      font-size: 25px;
+      font-weight: bold;
+    }
+    main {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 16px;
+    }
+    .panel {
+      background: #192734;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+    input { background: #253341; color: white; }
+    button {
+      background: #1d9bf0;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.secondary { background: #536471; }
+    #chat { display: none; }
+    #messages {
+      height: 300px;
+      overflow-y: auto;
+      background: #101820;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    .message {
+      background: #253341;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+    .message strong { color: #1d9bf0; }
+    #status { color: #aab8c2; font-size: 14px; }
+  </style>
 </head>
 <body>
-<main>
-<header>
-<div class="logo">𝕏 Messenger</div>
-<p>Connect with the world.</p>
-</header>
+  <header>𝕏 Messenger</header>
 
-<section class="card" id="auth">
-<h2 id="authTitle">Welcome back</h2>
-<p>Create an account or sign in to continue.</p>
-<form id="authForm">
-<input id="name" placeholder="Your display name" maxlength="40" class="hidden">
-<input id="email" type="email" placeholder="Email address" required>
-<input id="password" type="password" placeholder="Password (6+ characters)" minlength="6" required>
-<button id="submitAuth" type="submit">Sign in</button>
-</form>
-<button class="secondary" id="toggle">Create an account</button>
-</section>
+  <main>
+    <section class="panel" id="auth">
+      <h2>Welcome to X Messenger</h2>
+      <p>Create an account or log in to join the global chat.</p>
+      <input id="name" placeholder="Your display name (for sign-up)" maxlength="40">
+      <input id="email" type="email" placeholder="Email address" autocomplete="email">
+      <input id="password" type="password" placeholder="Password (at least 6 characters)" autocomplete="current-password">
+      <button id="signup">Create account</button>
+      <button id="login" class="secondary">Log in</button>
+      <p id="status" role="status"></p>
+    </section>
 
-<section class="card hidden" id="chat">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-<h2>Global Chat</h2>
-<button id="logout" style="width:auto">Sign out</button>
-</div>
-<p id="welcome"></p>
-<div id="messages"><p>Loading messages…</p></div>
-<form id="messageForm">
-<input id="message" placeholder="Write a message…" maxlength="500" required>
-<button type="submit">Send message</button>
-</form>
-</section>
-<p id="status" role="status"></p>
-</main>
+    <section class="panel" id="chat">
+      <h2>Global Chat</h2>
+      <p id="welcome"></p>
+      <div id="messages"></div>
+      <form id="messageForm">
+        <input id="messageInput" placeholder="Write a message..." maxlength="500" required>
+        <button type="submit">Send message</button>
+      </form>
+      <button id="logout" class="secondary">Log out</button>
+      <p id="chatStatus" role="status"></p>
+    </section>
+  </main>
 
-<script type="module">
-import { initializeApp }
- from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import {
- getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
- onAuthStateChanged, signOut, updateProfile
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import {
- getFirestore, collection, addDoc, query, orderBy,
- limit, onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, createUserWithEmailAndPassword,
+      signInWithEmailAndPassword, onAuthStateChanged,
+      updateProfile, signOut
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, query,
+      orderBy, limit, onSnapshot, serverTimestamp
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Replace these values with your Firebase web app configuration.
-const firebaseConfig = {
-  apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_AUTH_DOMAIN_HERE",
-  projectId: "x-messenger-c107a",
-  storageBucket: "PASTE_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_APP_ID_HERE"
-};
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnJ6uPkwfoszAVr0mG2fEY3552HXdz4VY",
+      authDomain: "x-messenger-c107a.firebaseapp.com",
+      projectId: "x-messenger-c107a",
+      storageBucket: "x-messenger-c107a.firebasestorage.app",
+      messagingSenderId: "174260508186",
+      appId: "1:174260508186:web:c41867e0aafaac4c8363a3",
+      measurementId: "G-6JK18E8JJQ"
+    };
 
-const status = document.getElementById("status");
-const authBox = document.getElementById("auth");
-const chatBox = document.getElementById("chat");
-const nameInput = document.getElementById("name");
-const title = document.getElementById("authTitle");
-const submitAuth = document.getElementById("submitAuth");
-const toggle = document.getElementById("toggle");
-let app, auth, db, signup = false, stopMessages = null;
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-function showError(error) {
-  status.textContent = error.message || String(error);
-}
+    const authPanel = document.getElementById("auth");
+    const chatPanel = document.getElementById("chat");
+    const status = document.getElementById("status");
+    const chatStatus = document.getElementById("chatStatus");
+    const messagesBox = document.getElementById("messages");
+    const messageInput = document.getElementById("messageInput");
 
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-} catch (error) {
-  showError(error);
-}
+    let stopMessages = null;
 
-toggle.addEventListener("click", () => {
-  signup = !signup;
-  nameInput.classList.toggle("hidden", !signup);
-  nameInput.required = signup;
-  title.textContent = signup ? "Create your account" : "Welcome back";
-  submitAuth.textContent = signup ? "Sign up" : "Sign in";
-  toggle.textContent = signup ? "Already have an account? Sign in" : "Create an account";
-  status.textContent = "";
-});
+    document.getElementById("signup").addEventListener("click", async () => {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-document.getElementById("authForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  status.textContent = "Please wait…";
-  try {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    if (signup) {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(credential.user, {
-        displayName: nameInput.value.trim()
+      if (!name) {
+        status.textContent = "Please enter a display name.";
+        return;
+      }
+
+      try {
+        status.textContent = "Creating your account...";
+        const result = await createUserWithEmailAndPassword(
+          auth, email, password
+        );
+        await updateProfile(result.user, { displayName: name });
+        status.textContent = "Account created!";
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+
+    document.getElementById("login").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        status.textContent = "Logging in...";
+        await signInWithEmailAndPassword(auth, email, password);
+        status.textContent = "Logged in!";
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (stopMessages) {
+        stopMessages();
+        stopMessages = null;
+      }
+
+      messagesBox.replaceChildren();
+      authPanel.style.display = user ? "none" : "block";
+      chatPanel.style.display = user ? "block" : "none";
+
+      if (!user) return;
+
+      document.getElementById("welcome").textContent =
+        "Logged in as " + (user.displayName || user.email);
+
+      const messagesQuery = query(
+        collection(db, "messages"),
+        orderBy("createdAt", "asc"),
+        limit(100)
+      );
+
+      stopMessages = onSnapshot(messagesQuery, (snapshot) => {
+        messagesBox.replaceChildren();
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const item = document.createElement("div");
+          item.className = "message";
+
+          const sender = document.createElement("strong");
+          sender.textContent = (data.name || "User") + ": ";
+
+          const content = document.createElement("span");
+          content.textContent = data.text || "";
+
+          item.append(sender, content);
+          messagesBox.appendChild(item);
+        });
+
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+        chatStatus.textContent = "";
+      }, (error) => {
+        chatStatus.textContent =
+          "Cannot load messages. Check your Firestore rules. " + error.message;
       });
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-    }
-    status.textContent = "";
-  } catch (error) {
-    showError(error);
-  }
-});
-
-onAuthStateChanged(auth, user => {
-  authBox.classList.toggle("hidden", !!user);
-  chatBox.classList.toggle("hidden", !user);
-  if (stopMessages) stopMessages();
-  stopMessages = null;
-
-  if (!user) return;
-  document.getElementById("welcome").textContent =
-    "Signed in as " + (user.displayName || user.email);
-  const messagesQuery = query(
-    collection(db, "messages"),
-    orderBy("createdAt", "asc"),
-    limit(100)
-  );
-  stopMessages = onSnapshot(messagesQuery, snapshot => {
-    const box = document.getElementById("messages");
-    box.replaceChildren();
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const item = document.createElement("div");
-      item.className = "msg";
-      const sender = document.createElement("b");
-      sender.textContent = data.name || "User";
-      const body = document.createElement("div");
-      body.textContent = data.text || "";
-      item.append(sender, body);
-      box.append(item);
     });
-    box.scrollTop = box.scrollHeight;
-  }, showError);
-});
 
-document.getElementById("messageForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const user = auth.currentUser;
-  const field = document.getElementById("message");
-  const text = field.value.trim();
-  if (!user || !text) return;
+    document.getElementById("messageForm").addEventListener(
+      "submit", async (event) => {
+        event.preventDefault();
 
-  try {
-    await addDoc(collection(db, "messages"), {
-      uid: user.uid,
-      name: user.displayName || user.email,
-      text,
-      createdAt: serverTimestamp()
-    });
-    field.value = "";
-    status.textContent = "";
-  } catch (error) {
-    showError(error);
-  }
-});
+        const user = auth.currentUser;
+        const message = messageInput.value.trim();
 
-document.getElementById("logout").addEventListener("click", async () => {
-  try { await signOut(auth); }
-  catch (error) { showError(error); }
-});
-</script>
+        if (!user || !message) return;
+
+        try {
+          chatStatus.textContent = "Sending...";
+          await addDoc(collection(db, "messages"), {
+            uid: user.uid,
+            name: user.displayName || user.email || "User",
+            text: message,
+            createdAt: serverTimestamp()
+          });
+
+          messageInput.value = "";
+          chatStatus.textContent = "";
+        } catch (error) {
+          chatStatus.textContent =
+            "Message not sent. Check Firestore rules. " + error.message;
+        }
+      }
+    );
+  </script>
 </body>
 </html>
